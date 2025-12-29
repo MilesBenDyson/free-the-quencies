@@ -1,0 +1,21 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Virtual Environment ---
+.venv/
+venv/
+ENV/
+
+# --- User-specific / local ---
+audio_compare_settings.json
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- IDE ---
+.idea/
+.vscode/
