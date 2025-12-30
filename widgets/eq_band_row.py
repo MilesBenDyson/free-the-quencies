@@ -1,40 +1,57 @@
-from PyQt6.QtWidgets import (
-    QWidget, QSpinBox, QHBoxLayout
-)
-from widgets.eq_control import EQControl
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QLineEdit
+from PyQt6.QtCore import QLocale
+from PyQt6.QtGui import QDoubleValidator
 
 
 class EQBandRow(QWidget):
-    def __init__(self, band_data, on_change_callback):
-        super().__init__()
+    """
+    Eine Zeile:
+    [ "500 Hz" ] [ Eingabefeld ]
+    Schreibt direkt in store[str(freq)] als float.
+    """
 
-        self.band_data = band_data
-        self.on_change = on_change_callback
+    def __init__(self, freq_hz: int, store: dict, parent=None):
+        super().__init__(parent)
+        self.freq_hz = int(freq_hz)
+        self.store = store
 
-        # Frequenz-Eingabe
-        self.freq_spin = QSpinBox()
-        self.freq_spin.setRange(20, 20000)
-        self.freq_spin.setValue(band_data["freq"])
-        self.freq_spin.setSuffix(" Hz")
-        self.freq_spin.setFixedWidth(90)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(4, 2, 4, 2)
+        layout.setSpacing(8)
 
-        # Gain-EQ
-        self.eq = EQControl("")
-        self.eq.set_value(band_data["gain"])
+        lbl = QLabel(f"{self.freq_hz} Hz")
+        lbl.setFixedWidth(70)
+        layout.addWidget(lbl)
 
-        # Signale verbinden
-        self.freq_spin.valueChanged.connect(self._freq_changed)
-        self.eq.spin.valueChanged.connect(self._gain_changed)
+        self.edit = QLineEdit()
+        self.edit.setPlaceholderText("0.0")
 
-        layout = QHBoxLayout()
-        layout.addWidget(self.freq_spin)
-        layout.addWidget(self.eq)
-        self.setLayout(layout)
+        validator = QDoubleValidator(-24.0, 24.0, 3, self.edit)
+        validator.setLocale(QLocale.system())
+        self.edit.setValidator(validator)
 
-    def _freq_changed(self, value):
-        self.band_data["freq"] = value
-        self.on_change()
+        key = str(self.freq_hz)
+        val = float(self.store.get(key, 0.0))
+        self.edit.setText(f"{val:.3f}")
 
-    def _gain_changed(self, value):
-        self.band_data["gain"] = value
-        self.on_change()
+        self.edit.editingFinished.connect(self._commit)
+        layout.addWidget(self.edit, 1)
+
+    def _commit(self):
+        key = str(self.freq_hz)
+        txt = (self.edit.text() or "").strip().replace(",", ".")
+        try:
+            v = float(txt) if txt else 0.0
+        except ValueError:
+            v = 0.0
+
+        # clamp
+        v = max(-24.0, min(24.0, v))
+        self.store[key] = v
+        self.edit.setText(f"{v:.3f}")
+
+    def set_value(self, value: float):
+        value = float(value)
+        value = max(-24.0, min(24.0, value))
+        self.store[str(self.freq_hz)] = value
+        self.edit.setText(f"{value:.3f}")

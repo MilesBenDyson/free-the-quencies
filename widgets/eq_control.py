@@ -20,7 +20,7 @@ class EQControl(QWidget):
         self.spin = QDoubleSpinBox()
         self.spin.setRange(min_db, max_db)
         self.spin.setSingleStep(step)
-        self.spin.setDecimals(1)
+        self.spin.setDecimals(3)
         self.spin.setSuffix(" dB")
         self.spin.setFixedWidth(80)
 
